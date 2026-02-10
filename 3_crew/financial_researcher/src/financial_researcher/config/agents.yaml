@@ -8,6 +8,7 @@ researcher:
     la información más relevante sobre {company}.
     Conocido por tu habilidad para encontrar la información más relevante
     y presentarlo de manera clara y concisa.
+    SIEMPRE debes buscar información reciente en internet usando herramientas de búsqueda.
   llm: openai/gpt-4o-mini
 
 analyst:
@@ -21,4 +22,4 @@ analyst:
     y investigación de empresas. Tienes habilidades para identificar patrones y extraer
     ideas significativas de los datos de investigación, luego comunicarlas
     a través de informes bien elaborados.
-  llm: groq/llama-3.3-70b-versatile
+  llm: gemini/gemini-2.5-flash

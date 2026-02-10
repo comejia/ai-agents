@@ -1,3 +1,16 @@
-Perplexity AI fue seleccionada como la mejor opción de inversión por su impresionante trayectoria de crecimiento y su proyección de valorización futura. La empresa ha demostrado un aumento significativo en el manejo de consultas diarias y se espera que su valor alcance los $32.3 billones en 2032. Aunque es una empresa privada, existen oportunidades para inversores acreditados, lo que puede ofrecer retornos lucrativos. 
-
-ZeroTier, aunque promete una fuerte demanda en soluciones de virtualización de redes, y Deepgram, con su tecnología avanzada de reconocimiento de voz, también muestran potencial; sin embargo, Perplexity AI destaca por su posición de mercado en rápido crecimiento y sus proyecciones robustas de crecimiento a largo plazo, lo cual inclinó la decisión final hacia su favor. ZeroTier y Deepgram no fueron seleccionadas debido a que, aunque muestran un buen potencial, no tienen las mismas proyecciones de valoración a largo plazo ni la misma trayectoria de crecimiento que Perplexity AI.
+{
+  "selected_company": {
+    "name": "Anthropic",
+    "reason": "Anthropic is selected due to its strong position in the market with a post-money valuation of $183 billion and promising revenue growth."
+  },
+  "not_selected_companies": [
+    {
+      "name": "OpenAI",
+      "reason": "While it raised $40 billion in 2025, concerns over profitability due to high operational costs make it a less attractive option."
+    },
+    {
+      "name": "xAI",
+      "reason": "Although valued at $200 billion and projected to be profitable by 2028, it does not currently have the immediate revenue metrics that make Anthropic a better option."
+    }
+  ]
+}
