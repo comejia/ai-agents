@@ -14,7 +14,9 @@ import uuid
 import asyncio
 from datetime import datetime
 
+
 load_dotenv(override=True)
+
 
 class State(TypedDict):
     messages: Annotated[List[Any], add_messages]
@@ -26,8 +28,12 @@ class State(TypedDict):
 
 class EvaluatorOutput(BaseModel):
     feedback: str = Field(description="Comentarios sobre la respuesta del asistente")
-    success_criteria_met: bool = Field(description="Si se han cumplido los criterios de éxito")
-    user_input_needed: bool = Field(description="True si se necesita más input del usuario, o aclaraciones, o el asistente está bloqueado")
+    success_criteria_met: bool = Field(
+        description="Si se han cumplido los criterios de éxito"
+    )
+    user_input_needed: bool = Field(
+        description="True si se necesita más input del usuario, o aclaraciones, o el asistente está bloqueado"
+    )
 
 
 class Sidekick:
@@ -48,7 +54,9 @@ class Sidekick:
         worker_llm = ChatOpenAI(model="gpt-4o-mini")
         self.worker_llm_with_tools = worker_llm.bind_tools(self.tools)
         evaluator_llm = ChatOpenAI(model="gpt-4o-mini")
-        self.evaluator_llm_with_output = evaluator_llm.with_structured_output(EvaluatorOutput)
+        self.evaluator_llm_with_output = evaluator_llm.with_structured_output(
+            EvaluatorOutput
+        )
         await self.build_graph()
 
     def worker(self, state: State) -> Dict[str, Any]:
@@ -59,7 +67,7 @@ class Sidekick:
     La fecha y hora actual es {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 
     Estos son los criterios de éxito:
-    {state['success_criteria']}
+    {state["success_criteria"]}
     Debes responder con una pregunta para el usuario sobre esta tarea o con tu respuesta final.
     Si tienes una pregunta para el usuario, debes responderla claramente. Un ejemplo podría ser:
 
@@ -67,14 +75,14 @@ class Sidekick:
 
     Si has terminado, responde con la respuesta final y no hagas ninguna pregunta; simplemente responde con la respuesta.
     """
-        
+
         if state.get("feedback_on_work"):
             system_message += f"""
     Anteriormente creías que habías completado la tarea, pero tu respuesta fue rechazada porque no cumplía los criterios de éxito.
     Aquí tienes la explicación del motivo del rechazo:
-    {state['feedback_on_work']}
+    {state["feedback_on_work"]}
     Con esta información, continúa con la tarea y asegúrate de que cumples los criterios de éxito o si tienes alguna pregunta para el usuario."""
-        
+
         # Añadir el mensaje del sistema
 
         found_system_message = False
@@ -83,27 +91,26 @@ class Sidekick:
             if isinstance(message, SystemMessage):
                 message.content = system_message
                 found_system_message = True
-        
+
         if not found_system_message:
             messages = [SystemMessage(content=system_message)] + messages
-        
+
         # Invocar el LLM con herramientas
         response = self.worker_llm_with_tools.invoke(messages)
-        
+
         # Retornar el estado actualizado
         return {
             "messages": [response],
         }
 
-
     def worker_router(self, state: State) -> str:
         last_message = state["messages"][-1]
-        
+
         if hasattr(last_message, "tool_calls") and last_message.tool_calls:
             return "tools"
         else:
             return "evaluator"
-        
+
     def format_conversation(self, messages: List[Any]) -> str:
         conversation = "Historial de la conversación:\n\n"
         for message in messages:
@@ -113,21 +120,21 @@ class Sidekick:
                 text = message.content or "[Herramienta usada]"
                 conversation += f"Asistente: {text}\n"
         return conversation
-        
+
     def evaluator(self, state: State) -> State:
         last_response = state["messages"][-1].content
 
-        system_message = f"""Eres un evaluador que determina si una tarea se ha completado correctamente por un asistente.
+        system_message = """Eres un evaluador que determina si una tarea se ha completado correctamente por un asistente.
     Evalúa la última respuesta del asistente según los criterios dados. Responde con tus comentarios y con tu decisión sobre si se han cumplido los criterios de éxito,
     y si se necesita más input del usuario."""
-        
+
         user_message = f"""Estás evaluando una conversación entre el usuario y el asistente. Decides qué acción tomar según la última respuesta del asistente.
 
     La conversación completa con el asistente, con la solicitud original del usuario y todas las respuestas, es:
-    {self.format_conversation(state['messages'])}
+    {self.format_conversation(state["messages"])}
 
     Los criterios de éxito para esta tarea son:
-    {state['success_criteria']}
+    {state["success_criteria"]}
 
     Y la respuesta final del asistente que estás evaluando es:
     {last_response}
@@ -142,15 +149,23 @@ class Sidekick:
         if state["feedback_on_work"]:
             user_message += f"Además, ten en cuenta que en un intento anterior del asistente, proporcionaste estos comentarios: {state['feedback_on_work']}\n"
             user_message += "Si ves que el asistente está repitiendo los mismos errores, entonces considera responder que se necesita input del usuario."
-        
-        evaluator_messages = [SystemMessage(content=system_message), HumanMessage(content=user_message)]
+
+        evaluator_messages = [
+            SystemMessage(content=system_message),
+            HumanMessage(content=user_message),
+        ]
 
         eval_result = self.evaluator_llm_with_output.invoke(evaluator_messages)
         new_state = {
-            "messages": [{"role": "assistant", "content": f"Comentarios del evaluador sobre esta respuesta: {eval_result.feedback}"}],
+            "messages": [
+                {
+                    "role": "assistant",
+                    "content": f"Comentarios del evaluador sobre esta respuesta: {eval_result.feedback}",
+                }
+            ],
             "feedback_on_work": eval_result.feedback,
             "success_criteria_met": eval_result.success_criteria_met,
-            "user_input_needed": eval_result.user_input_needed
+            "user_input_needed": eval_result.user_input_needed,
         }
         return new_state
 
@@ -159,7 +174,6 @@ class Sidekick:
             return "END"
         else:
             return "worker"
-
 
     async def build_graph(self):
         # Set up Graph Builder with State
@@ -171,9 +185,15 @@ class Sidekick:
         graph_builder.add_node("evaluator", self.evaluator)
 
         # Add edges
-        graph_builder.add_conditional_edges("worker", self.worker_router, {"tools": "tools", "evaluator": "evaluator"})
+        graph_builder.add_conditional_edges(
+            "worker", self.worker_router, {"tools": "tools", "evaluator": "evaluator"}
+        )
         graph_builder.add_edge("tools", "worker")
-        graph_builder.add_conditional_edges("evaluator", self.route_based_on_evaluation, {"worker": "worker", "END": END})
+        graph_builder.add_conditional_edges(
+            "evaluator",
+            self.route_based_on_evaluation,
+            {"worker": "worker", "END": END},
+        )
         graph_builder.add_edge(START, "worker")
 
         # Compile the graph
@@ -184,17 +204,18 @@ class Sidekick:
 
         state = {
             "messages": message,
-            "success_criteria": success_criteria or "La respuesta debe ser clara y precisa",
+            "success_criteria": success_criteria
+            or "La respuesta debe ser clara y precisa",
             "feedback_on_work": None,
             "success_criteria_met": False,
-            "user_input_needed": False
+            "user_input_needed": False,
         }
         result = await self.graph.ainvoke(state, config=config)
         user = {"role": "user", "content": message}
         reply = {"role": "assistant", "content": result["messages"][-2].content}
         feedback = {"role": "assistant", "content": result["messages"][-1].content}
         return history + [user, reply, feedback]
-    
+
     def cleanup(self):
         if self.browser:
             try:
