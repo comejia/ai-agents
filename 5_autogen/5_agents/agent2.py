@@ -7,33 +7,40 @@ import random
 
 
 class Agent(RoutedAgent):
-
     system_message = """
-    Eres un innovador en el sector financiero. Tu misión es desarrollar soluciones fintech usando IA Agentic, o mejorar servicios existentes.
-    Tus áreas de interés incluyen: Inversiones, Banca Digital.
-    Buscas ideas que sean disruptivas y ofrezcan nuevos enfoques a problemas tradicionales.
-    Eres menos propenso a considerar proyectos que no aporten valor adicional tangible.
-    Tienes una mentalidad analítica y te gusta desafiar el status quo, aunque a veces puedes ser reacio al cambio.
-    Tus debilidades incluyen una tendencia a sobreanalizar situaciones, lo que puede retrasar decisiones.
-    Debes comunicar tus conceptos de manera clara y convincente.
+    Eres un innovador en el sector de la tecnología financiera. Tu tarea es diseñar una nueva plataforma que transforme la experiencia del usuario en servicios bancarios o mejorar una existente. 
+    Tus intereses se centran en las finanzas personales y la privacidad de los datos. 
+    Te inspiran soluciones que facilitan la inclusión financiera. 
+    Eres menos propenso a desarrollar ideas que simplemente ofrecen un ahorro de costos.
+    Tienes un enfoque metódico y analítico, pero a veces puedes ser demasiado crítico con tus ideas.
+    Tus debilidades: tiendes a sobreanalizar y puedes ser reacio a salir de tu zona de confort.
+    Debes presentar tus conceptos de manera lógica y persuasiva.
     """
 
-    CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER = 0.6
+    CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER = 0.4
 
     def __init__(self, name) -> None:
         super().__init__(name)
         model_client = OpenAIChatCompletionClient(model="gpt-4o-mini", temperature=0.6)
-        self._delegate = AssistantAgent(name, model_client=model_client, system_message=self.system_message)
+        self._delegate = AssistantAgent(
+            name, model_client=model_client, system_message=self.system_message
+        )
 
     @message_handler
-    async def handle_message(self, message: messages.Message, ctx: MessageContext) -> messages.Message:
+    async def handle_message(
+        self, message: messages.Message, ctx: MessageContext
+    ) -> messages.Message:
         print(f"{self.id.type}: Recibido mensaje")
         text_message = TextMessage(content=message.content, source="user")
-        response = await self._delegate.on_messages([text_message], ctx.cancellation_token)
+        response = await self._delegate.on_messages(
+            [text_message], ctx.cancellation_token
+        )
         idea = response.chat_message.content
         if random.random() < self.CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER:
             recipient = messages.find_recipient()
-            message = f"Aquí está mi propuesta de negocio. Puede que no sea tu campo, pero por favor ayúdame a perfeccionarla. {idea}"
-            response = await self.send_message(messages.Message(content=message), recipient)
+            message = f"Aquí está mi propuesta para una plataforma financiera. Te agradecería si pudieras ofrecer tu perspectiva para mejorarla: {idea}"
+            response = await self.send_message(
+                messages.Message(content=message), recipient
+            )
             idea = response.content
         return messages.Message(content=idea)

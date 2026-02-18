@@ -7,37 +7,40 @@ import random
 
 
 class Agent(RoutedAgent):
-
-    # Cambia este mensaje de sistema para reflejar las características únicas de este agente
-
     system_message = """
-    Eres un analista de tendencias en el sector tecnológico. Tu objetivo es identificar nuevas oportunidades de negocio utilizando IA, o mejorar servicios existentes.
-    Tus intereses personales se centran en los sectores: Tecnología, Finanzas.
-    Te encantan las ideas innovadoras que combinan distintos campos para crear sinergias eficaces.
-    Le prestas menos atención a conceptos de negocio que no incorporan la tecnología de vanguardia.
-    Eres lógico, perspicaz y tienes un alto apetito por el aprendizaje continuo. A veces, te resulta difícil desprenderte de los detalles técnicos.
-    Tus debilidades: tiendes a ser crítico y exigente contigo mismo y con los demás.
-    Debes comunicarte de manera concisa y técnica al presentar tus análisis.
+    Eres un analista de mercado innovador. Tu objetivo es identificar nuevas oportunidades de negocio en el sector tecnológico o mejorar un producto existente mediante la integración de inteligencia artificial.
+    Tus intereses personales son en los sectores: Tecnología, Financieros.
+    Te apasionan las ideas que giran en torno a la sostenibilidad y la inclusión financiera.
+    Eres menos receptivo a conceptos que carecen de un enfoque social.
+    Tienes un enfoque pragmático, curioso y te gusta investigar tendencias emergentes. 
+    Tus debilidades: a veces eres demasiado crítico y puedes ser reacio a aceptar ideas que parecen poco prácticas.
+    Debes presentar tus recomendaciones de manera clara y fundamentada.
     """
 
-    CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER = 0.3
-
-    # También puedes cambiar el código para hacer el comportamiento diferente, pero ten cuidado de mantener los métodos iguales
+    CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER = 0.6
 
     def __init__(self, name) -> None:
         super().__init__(name)
         model_client = OpenAIChatCompletionClient(model="gpt-4o-mini", temperature=0.5)
-        self._delegate = AssistantAgent(name, model_client=model_client, system_message=self.system_message)
+        self._delegate = AssistantAgent(
+            name, model_client=model_client, system_message=self.system_message
+        )
 
     @message_handler
-    async def handle_message(self, message: messages.Message, ctx: MessageContext) -> messages.Message:
+    async def handle_message(
+        self, message: messages.Message, ctx: MessageContext
+    ) -> messages.Message:
         print(f"{self.id.type}: Recibido mensaje")
         text_message = TextMessage(content=message.content, source="user")
-        response = await self._delegate.on_messages([text_message], ctx.cancellation_token)
+        response = await self._delegate.on_messages(
+            [text_message], ctx.cancellation_token
+        )
         idea = response.chat_message.content
         if random.random() < self.CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER:
             recipient = messages.find_recipient()
-            message = f"Esta es mi evaluación de negocio. Quizás no sea tu campo, pero por favor considérala y ofrécele mejoras. {idea}"
-            response = await self.send_message(messages.Message(content=message), recipient)
+            message = f"Esta es mi recomendación de negocio. Puede que no sea tu especialidad, pero te agradecería que la refinaras y la optimizaras. {idea}"
+            response = await self.send_message(
+                messages.Message(content=message), recipient
+            )
             idea = response.content
         return messages.Message(content=idea)

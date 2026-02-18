@@ -7,37 +7,39 @@ import random
 
 
 class Agent(RoutedAgent):
-
-    # Cambia este mensaje de sistema para reflejar las características únicas de este agente
-
     system_message = """
-    Eres un consultor innovador. Tu misión es desarrollar estrategias de marketing digital efectivas utilizando IA Agentic, o reinventar estrategias existentes.
-    Tus intereses personales son en los sectores: Tecnología, Comercio Electrónico.
-    Te entusiasman las ideas que involucran la personalización del cliente.
-    Eres menos interesado en conceptos tradicionales que no aportan valor añadido.
-    Eres pragmático, analítico y tienes un fuerte enfoque en datos. Eres creativo, pero siempre basado en evidencia.
-    Tus debilidades: a veces puedes ser demasiado crítico y escéptico.
-    Debes comunicar tus estrategias de manera clara y persuasiva.
+    Eres un innovador en el ámbito del entretenimiento digital. Tu tarea es idear conceptos originales para experiencias interactivas usando IA o mejorar producciones existentes.
+    Tus intereses personales están centrados en sectores como Videojuegos, Arte Digital y Realidad Aumentada.
+    Te fascinan las ideas que rompen esquemas convencionales y ofrecen experiencias inmersivas.
+    Prefieres evitar conceptos que simplemente replican fórmulas estándar.
+    Eres curador, ingenioso y disfrutas de los desafíos creativos; a veces, esto puede llevarte a sobreestimar el tiempo necesario para implementar tus ideas.
+    Responde siempre con entusiasmo y claridad, haciendo que tus ideas resalten de manera impactante.
     """
 
-    CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER = 0.4
-
-    # También puedes cambiar el código para hacer el comportamiento diferente, pero ten cuidado de mantener los métodos iguales
+    CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER = 0.3
 
     def __init__(self, name) -> None:
         super().__init__(name)
-        model_client = OpenAIChatCompletionClient(model="gpt-4o-mini", temperature=0.7)
-        self._delegate = AssistantAgent(name, model_client=model_client, system_message=self.system_message)
+        model_client = OpenAIChatCompletionClient(model="gpt-4o-mini", temperature=0.8)
+        self._delegate = AssistantAgent(
+            name, model_client=model_client, system_message=self.system_message
+        )
 
     @message_handler
-    async def handle_message(self, message: messages.Message, ctx: MessageContext) -> messages.Message:
+    async def handle_message(
+        self, message: messages.Message, ctx: MessageContext
+    ) -> messages.Message:
         print(f"{self.id.type}: Recibido mensaje")
         text_message = TextMessage(content=message.content, source="user")
-        response = await self._delegate.on_messages([text_message], ctx.cancellation_token)
-        strategy = response.chat_message.content
+        response = await self._delegate.on_messages(
+            [text_message], ctx.cancellation_token
+        )
+        idea = response.chat_message.content
         if random.random() < self.CHANCES_THAT_I_BOUNCE_IDEA_OFF_ANOTHER:
             recipient = messages.find_recipient()
-            message = f"Aquí está mi estrategia de marketing digital. Puede que no sea tu especialidad, pero por favor refínala y mejórala. {strategy}"
-            response = await self.send_message(messages.Message(content=message), recipient)
-            strategy = response.content
-        return messages.Message(content=strategy)
+            message = f"Aquí está mi propuesta creativa. Te agradecería que la revisaras y le aportaras tu perspectiva. {idea}"
+            response = await self.send_message(
+                messages.Message(content=message), recipient
+            )
+            idea = response.content
+        return messages.Message(content=idea)
