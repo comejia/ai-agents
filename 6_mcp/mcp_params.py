@@ -12,7 +12,11 @@ polygon_api_key = os.getenv("POLYGON_API_KEY")
 if is_paid_polygon or is_realtime_polygon:
     market_mcp = {
         "command": "uvx",
-        "args": ["--from", "git+https://github.com/polygon-io/mcp_polygon@master", "mcp_polygon"],
+        "args": [
+            "--from",
+            "git+https://github.com/polygon-io/mcp_polygon@master",
+            "mcp_polygon",
+        ],
         "env": {"POLYGON_API_KEY": polygon_api_key},
     }
 else:
@@ -33,11 +37,11 @@ trader_mcp_server_params = [
 def researcher_mcp_server_params(name: str):
     return [
         {"command": "uvx", "args": ["mcp-server-fetch"]},
-        {
-            "command": "npx",
-            "args": ["-y", "@modelcontextprotocol/server-brave-search"],
-            "env": brave_env,
-        },
+        # {
+        #    "command": "npx",
+        #    "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+        #    "env": brave_env,
+        # },
         {
             "command": "npx",
             "args": ["-y", "mcp-memory-libsql"],
